@@ -1,0 +1,52 @@
+
+name: Gerar IPA para iPhone (nao assinado)
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  gerar-ipa:
+    runs-on: macos-15
+    timeout-minutes: 45
+
+    steps:
+      - name: Baixar codigo do repositorio
+        uses: actions/checkout@v4
+
+      - name: Instalar XcodeGen
+        run: brew install xcodegen
+
+      - name: Verificar integridade do projeto
+        run: python3 scripts/verificar_projeto.py
+
+      - name: Gerar projeto Xcode
+        run: xcodegen generate
+
+      - name: Compilar app para iPhone (sem assinatura)
+        shell: bash
+        run: |
+          set -o pipefail
+          xcodebuild \
+            -project MediaDownloaderIOS.xcodeproj \
+            -scheme MediaDownloaderIOS \
+            -configuration Release \
+            -sdk iphoneos \
+            -destination 'generic/platform=iOS' \
+            -derivedDataPath "$RUNNER_TEMP/build" \
+            CODE_SIGNING_ALLOWED=NO \
+            build 2>&1 | tee "$RUNNER_TEMP/xcodebuild.log"
+
+      - name: Empacotar arquivo IPA
+        shell: bash
+        run: bash scripts/package-ipa.sh
+
+      - name: Publicar IPA para baixar
+        uses: actions/upload-artifact@v4
+        with:
+          name: MediaDownloader-iPhone-IPA-NAO-ASSINADO
+          path: MediaDownloader_iPhone_UNSIGNED.ipa
+          if-no-files-found: error
+          retention-days: 14
