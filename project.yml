@@ -1,0 +1,35 @@
+name: MediaDownloaderIOS
+options:
+  bundleIdPrefix: com.mediadownloader
+settings:
+  base:
+    SWIFT_VERSION: '5.9'
+    IPHONEOS_DEPLOYMENT_TARGET: '17.0'
+    TARGETED_DEVICE_FAMILY: '1'
+    CODE_SIGN_STYLE: Automatic
+packages:
+  ZIPFoundation:
+    url: https://github.com/weichsel/ZIPFoundation.git
+    from: 0.9.19
+  YouTubeKit:
+    url: https://github.com/alexeichhorn/YouTubeKit.git
+    exactVersion: 0.4.9
+targets:
+  MediaDownloaderIOS:
+    type: application
+    platform: iOS
+    sources:
+      - MediaDownloaderIOS
+    dependencies:
+      - package: ZIPFoundation
+      - package: YouTubeKit
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.mediadownloader.ios
+        GENERATE_INFOPLIST_FILE: YES
+        INFOPLIST_KEY_CFBundleDisplayName: MediaDownloader
+        INFOPLIST_KEY_UIApplicationSceneManifest_Generation: YES
+        INFOPLIST_KEY_UIApplicationSupportsDocumentBrowser: NO
+        INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone: UIInterfaceOrientationPortrait
+        INFOPLIST_KEY_LSSupportsOpeningDocumentsInPlace: YES
+        INFOPLIST_KEY_UIFileSharingEnabled: YES
