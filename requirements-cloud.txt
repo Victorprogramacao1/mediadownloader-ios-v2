@@ -1,0 +1,4 @@
+# MediaDownloader Render: FFmpeg vem do apt (sem pacote Python redundante)
+fastapi==0.162.5
+uvicorn==0.54.0
+yt-dlp==2026.10.26

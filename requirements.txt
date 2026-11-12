@@ -1,0 +1,5 @@
+# MediaDownloader Windows/local: dependencias diretas verificadas em 2026-11-12
+fastapi==0.162.5
+uvicorn==0.54.0
+yt-dlp==2026.10.26
+imageio-ffmpeg==0.8.1

@@ -1,66 +1,59 @@
-# MediaDownloader iPhone V2 — processamento local (beta)
+# MediaDownloader V1.8 — GitHub + Render
 
-Projeto SwiftUI iOS 17+ adaptado para iPhone 15 Pro Max, a partir da V1 que já foi instalada por Sideloadly. **Este ZIP contém o código-fonte**, não um IPA pronto. O workflow gera um `MediaDownloader_iPhone_UNSIGNED.ipa` para assinatura no Windows.
+Versão atualizada com dependências fixadas para uso privado na nuvem. Processa **mídias próprias ou autorizadas**.
 
-## Principais mudanças
+## Publicar
 
-- Reconhece `youtube.com/watch`, `youtu.be`, `youtube.com/shorts` e URLs HTTPS diretas de vídeo MP4/MOV.
-- Inclui o extrator local **YouTubeKit 0.4.9** (MIT). Especifica **`methods: [.local]`**, sem fallback remoto e sem Render.
-- Para **MP4 1080p**, solicita um fluxo MP4 Full HD disponível. Quando o fluxo não inclui áudio, obtém M4A/AAC em separado e junta no iPhone com AVFoundation.
-- Não troca 1080p por 720p silenciosamente; falha de um item não impede os próximos.
-- Fila sequencial de 1 a 100 URLs; status/progresso individual e botão **Interromper fila**.
-- ZIP automático de arquivos concluídos, com um único botão **Salvar todos**, que abre a folha de compartilhamento do iOS (escolha **Salvar em Arquivos**).
-- Evita conversão extra quando o MP4 já é 1920×1080 H.264/AAC.
-- Todos os arquivos gerados são armazenados na pasta `MediaDownloader/Lote_...` do app em Arquivos (compartilhamento de arquivos do iOS habilitado).
+1. Crie um repositório **privado** no GitHub e envie **o conteúdo desta pasta** na raiz (não envie o ZIP sem extrair).
+2. No [Render Dashboard](https://dashboard.render.com), clique **New > Blueprint**.
+3. Conecte o repositório ao Render e selecione o arquivo `render.yaml`.
+4. Configure `APP_PASSWORD` com **no mínimo 12 caracteres**, sem colocá-la no código ou GitHub. Caso a tela do Blueprint não solicite, configure em **Environment** no serviço antes do próximo deploy.
+5. Aplique o Blueprint e aguarde a compilação do Dockerfile.
+6. Abra o endereço `https://...onrender.com`. O navegador pedirá usuário `admin` e a senha `APP_PASSWORD`.
+7. Faça um teste curto com um vídeo **seu/autorizado**, escolha MP4 1080p, inicie a fila, e clique em **Salvar todos** para baixar o ZIP antes de deixar o serviço inativo.
 
-## Restrições reais
+### Limites do serviço gratuito
 
-1. A biblioteca YouTubeKit **não é uma API oficial do YouTube** e pode parar de funcionar após mudanças da plataforma. Vídeos privados, protegidos, que exijam login, com restrição geográfica ou indisponíveis podem falhar. Não implementei autenticação por cookies, nem bypass de verificações. Use somente conteúdo próprio ou autorizado e respeite os termos aplicáveis.
-2. **1080p não é garantido para todos os vídeos.** O app informa erro se não encontrar um fluxo MP4 Full HD nativo, sem reduzir para 720p. Não melhora vídeos de resolução inferior artificialmente.
-3. A exportação com AVFoundation consome processamento e armazenamento. Para evitar interrupções, mantenha o aplicativo aberto e o aparelho com espaço suficiente.
-4. O app ainda **não oferece MP3**. A opção Original preserva vídeo MP4/MOV de origem quando possível.
-5. O pacote foi validado com parser Swift e testes estáticos neste ambiente Linux. **Ainda não foi compilado em Xcode nem testado com download real no iPhone**. A primeira execução no GitHub Actions verificará a integração.
+- O plano gratuito usa recursos modestos (atualmente 512 MB RAM e 0,1 CPU), e pode ser muito lento para recodificar 1080p.
+- A Render suspende serviços gratuitos após **15 minutos sem tráfego HTTP/WebSocket** e o próximo acesso pode levar aproximadamente um minuto para iniciar.
+- **Armazenamento é temporário:** arquivos e fila são perdidos em reinícios, redeploys ou suspensão. Nunca trate Render Free como armazenamento de longo prazo.
+- Por padrão: 20 links por lote, arquivos individuais de até 300 MB, limite suave de 900 MB em arquivos temporários e limite de 550 MB por ZIP.
+- O usuário precisa salvar o ZIP ao final. Não é recomendado para uso público intensivo.
+- A taxa de transferência e disponibilidade de formatos dependem da fonte; vídeos podem falhar por bloqueio do provedor ou falta de recursos.
+- A senha protege acesso, mas não equivale a um sistema de contas com cotas por usuário. Não compartilhe a senha.
+- Downloads são sequenciais, com quatro fragmentos em paralelo *dentro* de cada vídeo quando a origem permite.
 
-## Atualizar seu repositório existente
+### Segurança
 
-1. No Windows, extraia este ZIP.
-2. Abra seu repositório `Victorprogramacao1/mediadownloader-ios`, aba **Code**.
-3. Substitua na branch `main` os arquivos `project.yml`, `MediaDownloaderIOS/ContentView.swift` e `MediaDownloaderIOS/DownloadStore.swift` pelos arquivos da V2. **Preserve exatamente as pastas.** O `MediaDownloaderApp.swift` e os arquivos de automação foram incluídos para facilitar uma atualização completa.
-4. No **Actions**, execute `Gerar IPA para iPhone (nao assinado)` → **Run workflow**.
-5. Se a execução terminar verde, abra a execução, seção **Artifacts**, baixe `MediaDownloader-iPhone-IPA-NAO-ASSINADO` e extraia `MediaDownloader_iPhone_UNSIGNED.ipa`.
-6. No **Sideloadly** do Windows, escolha esse IPA, o seu iPhone e a mesma Conta Apple que usou antes. Use **Start**. Com conta gratuita, a assinatura precisa normalmente ser renovada a cada 7 dias.
-7. Abra o MediaDownloader e teste primeiro **um vídeo seu ou autorizado com 1080p** e depois uma fila de dois itens.
+- `APP_PASSWORD` é obrigatória quando `MEDIA_CLOUD=1` e autentica o site, APIs, ZIP e arquivos com HTTP Basic sobre HTTPS.
+- A rota `/api/health` fica pública para o monitoramento da Render.
+- Somente URLs HTTPS reconhecidas do YouTube são aceitas. Baixe apenas mídias com autorização.
+- A base de código e o projeto original não devem conter cookies, credenciais, chaves de APIs ou downloads anteriores.
 
-**Atenção:** atualizar somente o workflow `gerar-ipa.yml` não altera o aplicativo. É indispensável enviar os **arquivos Swift e `project.yml`**.
+### Local (Windows)
 
-## Estrutura
+A execução local continua disponível com `INICIAR_WINDOWS.bat`, sem exigir `APP_PASSWORD` na configuração padrão. Nunca rode a versão local escutando em `0.0.0.0` sem configurar autenticação.
 
-```
-MediaDownloaderIOS/
-  ContentView.swift
-  DownloadStore.swift
-  MediaDownloaderApp.swift
-.github/workflows/
-  gerar-ipa.yml
-scripts/
-  package-ipa.sh
-  verificar_projeto.py
-project.yml
-README.md
-```
+## Arquivos
 
-## Verificações locais (Linux ou Windows com Python 3)
+- `server.py`: API FastAPI, fila e processamento de mídia
+- `web/`: interface
+- `requirements.txt`: dependências Python
+- `Dockerfile`: instala FFmpeg e prepara o container
+- `render.yaml`: Blueprint gratuito da Render
+- `.gitignore` e `.dockerignore`: excluem arquivos privados e temporários
+- `tests/`: testes locais
 
-```
-python scripts/verificar_projeto.py
-```
+## Checklist de diagnóstico
 
-No macOS, `xcodegen generate` e `xcodebuild` confirmam a compilação completa. O GitHub Actions executa esses passos em um runner macOS.
+- `/api/health`: deve indicar `yt_dlp: true` e `ffmpeg: true`.
+- O navegador deve pedir a senha antes de acessar a interface.
+- Após a conclusão da fila, baixe o ZIP **antes** da suspensão ou reinício do serviço.
+- Para falhas, consulte **Logs** no dashboard da Render. Não publique logs contendo links privados ou dados pessoais.
 
-## Bibliotecas de terceiros
+Documentação oficial: https://render.com/docs/free e https://render.com/docs/blueprint-spec
 
-- [YouTubeKit](https://github.com/alexeichhorn/YouTubeKit) (licença MIT, 0.4.9) — extração local de streams.
-- [ZIPFoundation](https://github.com/weichsel/ZIPFoundation) — criação de ZIP no iOS.
-- [AVFoundation](https://developer.apple.com/documentation/avfoundation) — exportação e composição MP4 H.264/AAC.
 
-O app não solicita credenciais do YouTube nem se conecta ao backend da Render. Downloads e arquivos ficam no dispositivo, exceto as conexões HTTPS necessárias para acessar a fonte e as próprias dependências do app.
+## Atualização V1.8
+
+Veja `ATUALIZACAO_V1_8.md` para atualizar as dependências e conferir o motor.
